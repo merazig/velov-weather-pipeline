@@ -4,3 +4,4 @@ env
 .ruff_cache
 data/velov
 src/extraction/__pycache__
+__pycache__
