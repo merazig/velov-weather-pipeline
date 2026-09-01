@@ -20,6 +20,7 @@ def insert_data_to_mongodb(data, collection_name):
         f"mongodb://{host}:{port}",
         username=username,
         password=password,
+        authSource="admin",
         serverSelectionTimeoutMS=5000
     )
 
