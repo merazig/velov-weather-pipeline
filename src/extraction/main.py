@@ -4,6 +4,10 @@ from src.extraction.collect_velov import (
     get_velov_availabilities,
 )
 
+from src.extraction.load_mongo import (
+    insert_data_to_mongodb,
+)
+
 coordonnees = {
         "Albigny-sur-Saône": (45.874994, 4.833002),
         "Bron": (45.733925, 4.912376),
@@ -45,14 +49,17 @@ coordonnees = {
 
 def main():
     """Fonction main."""
-    maxfeatures = 250000
+    maxfeatures = 1000
     start = 1
     url_availabilities = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json"
+    """
     while start < 200000000:
         get_velov_availabilities(url_availabilities, maxfeatures, start)
 
         start += maxfeatures
-
+    """
+    data = get_velov_availabilities(url_availabilities, maxfeatures, start)
+    insert_data_to_mongodb(data, "velov_availabilities")
 
 if __name__ == "__main__":
     main()
