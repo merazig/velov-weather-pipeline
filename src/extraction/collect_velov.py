@@ -1,6 +1,7 @@
 """Collection des données Velov."""
 
 import requests
+import time
 
 def get_velov_stations(url):
     """Cette fonction récupère les stations Velov."""
@@ -38,7 +39,7 @@ def get_velov_availabilities(url):
 
     availabilities = []
 
-    while start < 100000:
+    while start < 1000000:
         params = {
             "maxfeatures": maxfeatures,
             "start": start
@@ -60,4 +61,8 @@ def get_velov_availabilities(url):
         
     return availabilities
 
+start_time = time.perf_counter()
 print(len(get_velov_availabilities("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json")))
+end_time = time.perf_counter()
+execution_time = end_time - start_time
+print(f"Temps d'exécution : {execution_time:.2f} secondes")
