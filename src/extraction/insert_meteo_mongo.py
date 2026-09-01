@@ -1,0 +1,1 @@
+"""Insert les données meteo dans la base mongo."""

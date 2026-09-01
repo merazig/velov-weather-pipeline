@@ -1,0 +1,1 @@
+"""Collect, load et insert data."""
