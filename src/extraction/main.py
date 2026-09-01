@@ -1,5 +1,9 @@
 """Collect, load et insert data."""
 
+from src.extraction.collect_velov import (
+    get_velov_availabilities,
+)
+
 coordonnees = {
         "Albigny-sur-Saône": (45.874994, 4.833002),
         "Bron": (45.733925, 4.912376),
@@ -37,10 +41,6 @@ coordonnees = {
         "Vénissieux": (45.709458, 4.872295),
         "Écully": (45.775089, 4.778673),
     }
-
-from src.extraction.collect_velov import (
-    get_velov_availabilities,
-)
 
 
 def main():

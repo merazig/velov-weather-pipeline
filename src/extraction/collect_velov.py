@@ -3,7 +3,7 @@
 import requests
 
 # import time
-import json
+# import json
 
 
 def get_velov_stations(url):
@@ -63,12 +63,12 @@ def get_velov_availabilities(url, maxfeatures, start):
         }
 
         availabilities.append(availability)
-
+    """
     filename = f"data/velov/availabilities{start}_{start + len(availabilities) - 1}.json"
 
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(availabilities, f, ensure_ascii=False, indent=4)
-
+    """
     return availabilities
 
 
