@@ -1,3 +1,5 @@
 env
 *.ipynb
 .env
+.ruff_cache
+data/velov

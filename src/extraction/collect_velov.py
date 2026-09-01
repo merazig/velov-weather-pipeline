@@ -1,7 +1,10 @@
 """Collection des données Velov."""
 
 import requests
-import time
+
+# import time
+import json
+
 
 def get_velov_stations(url):
     """Cette fonction récupère les stations Velov."""
@@ -11,10 +14,7 @@ def get_velov_stations(url):
     stations = []
 
     while True:
-        params = {
-            "maxfeatures": maxfeatures,
-            "start": start
-        }
+        params = {"maxfeatures": maxfeatures, "start": start}
 
         response = requests.get(url, params=params)
         response.raise_for_status()
@@ -29,40 +29,53 @@ def get_velov_stations(url):
         stations.extend(values)
         # On avance de la taille réellement récupérée
         start += len(values)
-        
+
     return stations
 
-def get_velov_availabilities(url):
-    """Cette fonction récupère les stations Velov."""
-    maxfeatures = 100000
-    start = 1
+
+def get_velov_availabilities(url, maxfeatures, start):
+    """Récupère les données Velov et conserve uniquement les informations utiles."""
+    params = {"maxfeatures": maxfeatures, "start": start, "horodate__gte": "2023-01-01"}
+
+    response = requests.get(url, params=params, timeout=300)
+    response.raise_for_status()
+
+    data = response.json()
+    values = data.get("values", [])
+
+    # Plus de données → on arrête
+    if not values:
+        return 0
 
     availabilities = []
 
-    while start < 1000000:
-        params = {
-            "maxfeatures": maxfeatures,
-            "start": start
+    for item in values:
+        main_stands = item.get("main_stands", {})
+        availabilities_data = main_stands.get("availabilities", {})
+
+        availability = {
+            "horodate": item.get("horodate"),
+            "station_id": item.get("number"),
+            "status": item.get("status"),
+            "capacity": main_stands.get("capacity"),
+            "bikes_available": availabilities_data.get("bikes"),
+            "stands_available": availabilities_data.get("stands"),
         }
 
-        response = requests.get(url, params=params)
-        response.raise_for_status()
+        availabilities.append(availability)
 
-        data = response.json()
-        values = data.get("values", [])
+    filename = f"data/velov/availabilities{start}_{start + len(availabilities) - 1}.json"
 
-        # Plus de données → on arrête
-        if not values:
-            break
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(availabilities, f, ensure_ascii=False, indent=4)
 
-        availabilities.extend(values)
-        # On avance de la taille réellement récupérée
-        start += len(values)
-        
     return availabilities
 
+
+"""
 start_time = time.perf_counter()
-print(len(get_velov_availabilities("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json")))
+
 end_time = time.perf_counter()
 execution_time = end_time - start_time
 print(f"Temps d'exécution : {execution_time:.2f} secondes")
+"""

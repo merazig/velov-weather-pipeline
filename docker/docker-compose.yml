@@ -30,7 +30,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
+  extraction:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: velov-extraction
+    depends_on:
+      - mongodb
+    environment:
+      MONGO_HOST: mongodb
+      MONGO_PORT: 27017
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DATABASE: ${MONGO_DATABASE}
+      MONGO_COLLECTION_STATION: ${MONGO_COLLECTION_STATION}
+      MONGO_COLLECTION_AVAILABLITY: ${MONGO_COLLECTION_AVAILABLITY}
+      MONGO_COLLECTION_WEATHER: ${MONGO_COLLECTION_WEATHER}
   
 volumes:
   minio_data:
