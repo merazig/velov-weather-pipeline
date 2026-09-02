@@ -89,4 +89,4 @@ def collect_meteo(commune, coordonnees):
 
     return documents
 
-print(len(collect_meteo("Villeurbanne", (45.769355, 4.884227))))
+#print(len(collect_meteo("Villeurbanne", (45.769355, 4.884227))))
