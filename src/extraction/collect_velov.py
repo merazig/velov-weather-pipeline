@@ -33,9 +33,16 @@ def get_velov_stations(url):
     return stations
 
 
-def get_velov_availabilities(url, maxfeatures, start):
+def get_velov_availabilities(url, maxfeatures, start, debut, fin):
     """Récupère les données Velov et conserve uniquement les informations utiles."""
-    params = {"maxfeatures": maxfeatures, "start": start, "horodate__gte": "2023-01-01"}
+    params = {
+        "maxfeatures": maxfeatures,
+        "start": start,
+        # date de debut
+        "horodate__gte": debut,
+        # date de fin
+        "horodate__lte": fin,
+    }
 
     response = requests.get(url, params=params, timeout=300)
     response.raise_for_status()
@@ -44,8 +51,6 @@ def get_velov_availabilities(url, maxfeatures, start):
     values = data.get("values", [])
 
     # Plus de données → on arrête
-    if not values:
-        return 0
 
     availabilities = []
 
@@ -67,7 +72,7 @@ def get_velov_availabilities(url, maxfeatures, start):
     filename = f"data/velov/availabilities{start}_{start + len(availabilities) - 1}.json"
 
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(availabilities, f, ensure_ascii=False, indent=4)
+        json.dump(availabilities, f, ensure_ascii=False)
     """
     return availabilities
 

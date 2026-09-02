@@ -6,12 +6,10 @@ from datetime import datetime
 
 import requests
 
-def collect_meteo(commune, coordonnees):
+
+def collect_meteo(commune, coordonnees, start_date, end_date):
     """Collecte les données météo pour Lyon et les communes voisines."""
     url = "https://historical-forecast-api.open-meteo.com/v1/forecast"
-
-    start_date = "2023-01-01"
-    end_date = "2026-09-01"
 
     variables_meteo = (
         "temperature_2m,"
@@ -38,10 +36,10 @@ def collect_meteo(commune, coordonnees):
     }
 
     response = requests.get(
-                url,
-                params=params,
-                timeout=120,
-            )
+        url,
+        params=params,
+        timeout=120,
+    )
 
     response.raise_for_status()
 
@@ -89,4 +87,5 @@ def collect_meteo(commune, coordonnees):
 
     return documents
 
-#print(len(collect_meteo("Villeurbanne", (45.769355, 4.884227))))
+
+# print(len(collect_meteo("Villeurbanne", (45.769355, 4.884227), "2023-01-01", "2026-09-01")))
