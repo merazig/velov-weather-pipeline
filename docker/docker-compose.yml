@@ -18,6 +18,9 @@ services:
       timeout: 5s
       retries: 5
 
+    networks:
+      - data_network
+
   mongodb:
     image: mongo:8.0
     container_name: mongodb
@@ -46,6 +49,41 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    
+    networks:
+      - data_network
+
+  
+  spark-master:
+    image: spark:4.1.2-python3
+    container_name: spark-master
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.master.Master
+    ports:
+      - "7077:7077"
+      - "8080:8080"
+    volumes:
+      - ../src:/app/src
+    networks:
+      - data_network
+
+  spark-worker:
+    image: spark:4.1.2-python3
+    container_name: spark-worker
+    command: >
+      /opt/spark/bin/spark-class
+      org.apache.spark.deploy.worker.Worker
+      spark://spark-master:7077
+    depends_on:
+      - spark-master
+    ports:
+      - "8081:8081"
+    volumes:
+      - ../src:/app/src
+    networks:
+      - data_network
+
   extraction:
     build:
       context: ..
@@ -60,7 +98,14 @@ services:
       MONGO_USERNAME: ${MONGO_USERNAME}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       MONGO_DATABASE: ${MONGO_DATABASE}
-  
+    networks:
+      - data_network
+
+
 volumes:
   minio_data:
   mongo_data:
+
+networks:
+  data_network:
+    driver: bridge
