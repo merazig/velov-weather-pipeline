@@ -49,17 +49,16 @@ coordonnees = {
 
 def main():
     """Fonction main."""
-    maxfeatures = 1000
+    maxfeatures = 100000
     start = 1
     url_availabilities = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json"
-    """
+    
     while start < 200000000:
-        get_velov_availabilities(url_availabilities, maxfeatures, start)
+        data = get_velov_availabilities(url_availabilities, maxfeatures, start)
+        insert_data_to_mongodb(data, "velov_availabilities")
 
         start += maxfeatures
-    """
-    data = get_velov_availabilities(url_availabilities, maxfeatures, start)
-    insert_data_to_mongodb(data, "velov_availabilities")
+    
 
 if __name__ == "__main__":
     main()
