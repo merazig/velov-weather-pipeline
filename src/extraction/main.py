@@ -1,7 +1,7 @@
 """Collect, load et insert data."""
 
-import calendar
 from datetime import date, timedelta
+import time
 
 from src.extraction.collect_velov import (
     get_velov_stations,
@@ -68,18 +68,21 @@ def main():
         "grandlyon/pvo_patrimoine_voirie.pvostationvelov/all.json"
     )
 
-    print("====== Collect stations Velov ======")
+    derniere_date = get_last_date("velov_availabilities")
 
-    data = get_velov_stations(url_stations)
-    result = insert_data_to_mongodb(data, "velov_stations")
+    # On conserve cette logique :
+    # si aucune disponibilité n'existe, on récupère les stations.
+    if not derniere_date:
+        print("====== Collect stations Velov ======")
 
-    print(f"{result} stations insérées")
+        data = get_velov_stations(url_stations)
+        result = insert_data_to_mongodb(data, "velov_stations")
+
+        print(f"{result} stations insérées")
 
     # ============================================================
     # DATE DE DEBUT
     # ============================================================
-
-    derniere_date = get_last_date("velov_availabilities")
 
     if derniere_date:
         date_debut = date.fromisoformat(derniere_date)
@@ -103,41 +106,59 @@ def main():
     )
 
     # ============================================================
-    # RÉCUPÉRATION MOIS PAR MOIS
+    # RÉCUPÉRATION SEMAINE PAR SEMAINE
     # ============================================================
 
     date_courante = date_debut
 
-    while date_courante <= date_aujourd_hui:
+    while date_courante < date_aujourd_hui:
 
-        annee = date_courante.year
-        mois = date_courante.month
+        debut_semaine = date_courante
+        fin_semaine = date_courante + timedelta(days=7)
 
-        # Premier jour du mois
-        debut_mois = date(annee, mois, 1)
+        # Ne pas dépasser aujourd'hui
+        if fin_semaine > date_aujourd_hui:
+            fin_semaine = date_aujourd_hui
 
-        # Dernier jour du mois
-        fin_mois = date(
-            annee,
-            mois,
-            calendar.monthrange(annee, mois)[1],
-        )
+        # ========================================================
+        # MÉTÉO
+        # ========================================================
+        
+        for commune, coordinates in coordonnees.items():
 
-        # On ne dépasse pas aujourd'hui
-        if fin_mois > date_aujourd_hui:
-            fin_mois = date_aujourd_hui
+            print(
+                f"Collect météo : {commune} | "
+                f"{debut_semaine} → {fin_semaine}"
+            )
 
-        # Si on est dans le premier mois,
-        # on commence à la dernière date connue.
-        debut_requete = max(date_courante, debut_mois)
+            data = collect_meteo(
+                commune,
+                coordinates,
+                str(debut_semaine),
+                str(fin_semaine),
+            )
 
+            result = insert_data_to_mongodb(
+                data,
+                "lyon_meteo",
+            )
+
+            print(
+                f"{commune} : "
+                f"{result} données météo insérées"
+            )
+            time.sleep(1)
+        
         print()
         print("========================================")
-        print(f"Collect Velov : {debut_requete} → {fin_mois}")
+        print(
+            f"Collect Velov : "
+            f"{debut_semaine} → {fin_semaine}"
+        )
         print("========================================")
 
         # ========================================================
-        # PAGINATION POUR LE MOIS
+        # PAGINATION VELOV
         # ========================================================
 
         start = 1
@@ -148,8 +169,8 @@ def main():
                 url_availabilities,
                 maxfeatures,
                 start,
-                str(debut_requete),
-                str(fin_mois),
+                str(debut_semaine),
+                str(fin_semaine),
             )
 
             # Plus de données
@@ -166,47 +187,20 @@ def main():
                 f"{result} disponibilités insérées"
             )
 
-            # Moins de données que la limite :
-            # on est arrivé à la fin du mois.
+            # Dernière page
             if len(data) < maxfeatures:
                 break
 
             start += maxfeatures
 
-        # ========================================================
-        # MÉTÉO DU MOIS
-        # ========================================================
-
-        for commune, coordinates in coordonnees.items():
-
-            print(
-                f"Collect météo : {commune} | "
-                f"{debut_requete} → {fin_mois}"
-            )
-
-            data = collect_meteo(
-                commune,
-                coordinates,
-                str(debut_requete),
-                str(fin_mois),
-            )
-
-            result = insert_data_to_mongodb(
-                data,
-                "lyon_meteo",
-            )
-
-            print(
-                f"{commune} : "
-                f"{result} données météo insérées"
-            )
 
         # ========================================================
-        # PASSAGE AU MOIS SUIVANT
+        # SEMAINE SUIVANTE
         # ========================================================
 
-        date_courante = fin_mois + timedelta(days=1)
+        date_courante = fin_semaine
 
 
 if __name__ == "__main__":
     main()
+
