@@ -1,3 +1,8 @@
+
+
+```Bash
+docker compose -f docker/docker-compose.yml --env-file .env down
+```
 ### build les images
 ```Bash
 docker compose -f docker/docker-compose.yml --env-file .env up -d --build

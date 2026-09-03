@@ -1,20 +1,18 @@
-"""Teste la lecture de MongoDB avec PySpark."""
+"""Utilitaires de création et configuration de SparkSession."""
 
 import os
 
 from pyspark.sql import SparkSession
 
 
-def main():
-    """Lit la collection Vélo'v depuis MongoDB."""
+def get_spark_session(app_name):
+    """Crée et configure une SparkSession pour MongoDB."""
 
     host = os.getenv("MONGO_HOST", "mongodb")
     port = os.getenv("MONGO_PORT", "27017")
     username = os.getenv("MONGO_USERNAME")
     password = os.getenv("MONGO_PASSWORD")
     database = os.getenv("MONGO_DATABASE")
-
-    collection = "velov_availabilities"
 
     mongo_uri = (
         f"mongodb://{username}:{password}"
@@ -24,7 +22,7 @@ def main():
 
     spark = (
         SparkSession.builder
-        .appName("ReadMongoDB")
+        .appName(app_name)
         .master("spark://spark-master:7077")
         .config(
             "spark.mongodb.read.connection.uri",
@@ -34,37 +32,19 @@ def main():
             "spark.mongodb.read.database",
             database,
         )
-        .config(
-            "spark.mongodb.read.collection",
-            collection,
-        )
         .getOrCreate()
     )
 
     spark.sparkContext.setLogLevel("WARN")
 
-    try:
-        df = (
-            spark.read
-            .format("mongodb")
-            .load()
-        )
+    return spark
 
-        print("=== SCHÉMA MONGODB ===")
-        df.printSchema()
+# lancer le script avec la commande suivante dans le terminal de votre machine hôte
+"""
+docker exec -e PYTHONPATH=/app/src -it spark-master /opt/spark/bin/spark-submit `
+  --master spark://spark-master:7077 `
+  --conf spark.jars.ivy=/tmp/ivy `
+  --packages org.mongodb.spark:mongo-spark-connector_2.13:11.1.0 `
+  /app/src/jobs/read_sources.py
 
-        print("=== 5 PREMIERS DOCUMENTS ===")
-        df.show(
-            5,
-            truncate=False,
-        )
-
-        print("=== NOMBRE DE PARTITIONS ===")
-        print(df.rdd.getNumPartitions())
-
-    finally:
-        spark.stop()
-
-
-if __name__ == "__main__":
-    main()
+  """
