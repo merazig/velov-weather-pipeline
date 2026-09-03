@@ -62,8 +62,10 @@ services:
       MONGO_DATABASE: ${MONGO_DATABASE}
   
   spark-master:
-    image: apache/spark:3.5.9-scala2.12-java11-python3-ubuntu
+    image: spark:4.1.2-python3
     container_name: spark-master
+    environment:
+      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.12:10.7.0
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.master.Master
@@ -75,10 +77,12 @@ services:
       - "7077:7077"
 
   spark-worker:
-    image: apache/spark:3.5.9-scala2.12-java11-python3-ubuntu
+    image: spark:4.1.2-python3
     container_name: spark-worker
     depends_on:
       - spark-master
+    environment:
+      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.12:10.7.0
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.worker.Worker
@@ -86,6 +90,27 @@ services:
       --webui-port 8081
     ports:
       - "8081:8081"
+
+  spark-driver:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.spark
+    container_name: spark-driver
+    depends_on:
+      - spark-master
+      - spark-worker
+      - mongodb
+    working_dir: /app
+    environment:
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_PORT: ${MONGO_PORT}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DATABASE: ${MONGO_DATABASE}
+
+      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.13:11.1.0
+      PYTHONPATH: /opt/spark/python:/app
+    command: ["sleep", "infinity"]
 
 
 volumes:
