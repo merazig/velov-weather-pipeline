@@ -3,48 +3,30 @@
 from utils.spark_session import get_spark_session
 
 
-def read_collection(
-    spark,
-    collection_name,
-):
+def read_collection(spark, collection_name):
     """Lit une collection MongoDB avec Spark."""
     return (
         spark.read
         .format("mongodb")
-        .option(
-            "collection",
-            collection_name,
-        )
+        .option("collection", collection_name)
         .load()
     )
 
 
-def show_source(
-    dataframe,
-    source_name,
-):
+def show_source(dataframe, source_name):
     """Affiche le schéma, quelques lignes et les partitions."""
-    print()
-    print("=" * 60)
-    print(f"{source_name} - SCHÉMA")
-    print("=" * 60)
-
+    print(f"\n=== {source_name} - SCHÉMA ===")
     dataframe.printSchema()
 
-    print()
-    print("=" * 60)
-    print(f"{source_name} - 5 PREMIÈRES LIGNES")
-    print("=" * 60)
-
+    print(f"\n=== {source_name} - 5 PREMIÈRES LIGNES ===")
     dataframe.show(
         5,
         truncate=False,
     )
 
-    print()
     print(
-        f"Partitions {source_name} :",
-        dataframe.rdd.getNumPartitions(),
+        f"Partitions {source_name} : "
+        f"{dataframe.rdd.getNumPartitions()}"
     )
 
 
@@ -60,24 +42,24 @@ def main():
             "velov_availabilities",
         )
 
-        show_source(
-            velov_df,
-            "VELOV AVAILABILITIES",
-        )
-
         stations_df = read_collection(
             spark,
             "velov_stations",
         )
 
-        show_source(
-            stations_df,
-            "VELOV STATIONS",
-        )
-
         meteo_df = read_collection(
             spark,
             "lyon_meteo",
+        )
+
+        show_source(
+            velov_df,
+            "VELOV AVAILABILITIES",
+        )
+
+        show_source(
+            stations_df,
+            "VELOV STATIONS",
         )
 
         show_source(

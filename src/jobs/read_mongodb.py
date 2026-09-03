@@ -7,7 +7,6 @@ from pyspark.sql import SparkSession
 
 def main():
     """Lit la collection Vélo'v depuis MongoDB."""
-
     host = os.getenv("MONGO_HOST", "mongodb")
     port = os.getenv("MONGO_PORT", "27017")
     username = os.getenv("MONGO_USERNAME")
