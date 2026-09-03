@@ -98,7 +98,7 @@ def main():
     # URL VELOV
     # ============================================================
 
-    maxfeatures = 10000
+    maxfeatures = 25000
 
     url_availabilities = (
         "https://data.grandlyon.com/fr/datapusher/ws/"
@@ -198,7 +198,7 @@ def main():
         # SEMAINE SUIVANTE
         # ========================================================
 
-        date_courante = fin_semaine + 1
+        date_courante = fin_semaine
 
 
 if __name__ == "__main__":
