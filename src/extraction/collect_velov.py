@@ -2,8 +2,7 @@
 
 import requests
 
-# import time
-# import json
+from datetime import datetime
 
 
 def get_velov_stations(url):
@@ -58,14 +57,20 @@ def get_velov_availabilities(url, maxfeatures, start, debut, fin):
         main_stands = item.get("main_stands", {})
         availabilities_data = main_stands.get("availabilities", {})
 
+        horodate = item.get("horodate")
+
+        if horodate:
+            horodate = datetime.fromisoformat(horodate)
+
         availability = {
-            "horodate": item.get("horodate"),
+            "horodate": horodate,
             "station_id": item.get("number"),
             "status": item.get("status"),
             "capacity": main_stands.get("capacity"),
             "bikes_available": availabilities_data.get("bikes"),
             "stands_available": availabilities_data.get("stands"),
         }
+
 
         availabilities.append(availability)
     """
@@ -76,11 +81,3 @@ def get_velov_availabilities(url, maxfeatures, start, debut, fin):
     """
     return availabilities
 
-
-"""
-start_time = time.perf_counter()
-
-end_time = time.perf_counter()
-execution_time = end_time - start_time
-print(f"Temps d'exécution : {execution_time:.2f} secondes")
-"""

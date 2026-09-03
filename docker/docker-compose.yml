@@ -64,8 +64,7 @@ services:
   spark-master:
     image: spark:4.1.2-python3
     container_name: spark-master
-    environment:
-      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.12:10.7.0
+
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.master.Master
@@ -81,15 +80,17 @@ services:
     container_name: spark-worker
     depends_on:
       - spark-master
-    environment:
-      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.12:10.7.0
+
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.worker.Worker
       spark://spark-master:7077
       --webui-port 8081
+      --cores 4
+      --memory 4g
     ports:
       - "8081:8081"
+
 
   spark-driver:
     build:
@@ -108,7 +109,6 @@ services:
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       MONGO_DATABASE: ${MONGO_DATABASE}
 
-      SPARK_JARS_PACKAGES: org.mongodb.spark:mongo-spark-connector_2.13:11.1.0
       PYTHONPATH: /opt/spark/python:/app
     command: ["sleep", "infinity"]
 
