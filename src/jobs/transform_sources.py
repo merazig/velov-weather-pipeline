@@ -119,7 +119,6 @@ def add_15_min_bucket(
     timestamp_column,
 ):
     """Arrondit un timestamp au quart d'heure inférieur."""
-
     timestamp_seconds = (
         F.col(timestamp_column)
         .cast("long")
@@ -141,10 +140,47 @@ def add_15_min_bucket(
         ),
     )
 
+def add_time_features(df):
+    """Ajoute des variables temporelles utiles à l'analyse."""
+    return (
+        df
+        .withColumn(
+            "year",
+            F.year("horodate"),
+        )
+        .withColumn(
+            "month",
+            F.month("horodate"),
+        )
+        .withColumn(
+            "day",
+            F.dayofmonth("horodate"),
+        )
+        .withColumn(
+            "hour",
+            F.hour("horodate"),
+        )
+        .withColumn(
+            "day_of_week",
+            F.dayofweek("horodate"),
+        )
+        .withColumn(
+            "is_weekend",
+            F.col("day_of_week").isin(1, 7),
+        )
+        .withColumn(
+            "availability_rate",
+            F.when(
+                F.col("capacity") > 0,
+                F.col("bikes_available")
+                / F.col("capacity"),
+            ).otherwise(None),
+        )
+    )
+
 
 def main():
     """Lit, transforme et joint les sources."""
-
     spark = get_spark_session(
         "TransformSources"
     )
@@ -224,27 +260,26 @@ def main():
                 how="left",
             )
         )
+        final_ready = add_time_features(
+                final_df
+            )
 
-        print("\n=== VELOV READY ===")
+
+        print("\n\n=== VELOV READY ===")
         velov_ready.printSchema()
         velov_ready.show(
             5,
             truncate=False,
         )
 
-        print("\n=== METEO READY ===")
+        print("\n\n=== METEO READY ===")
         meteo_ready.printSchema()
-        meteo_ready.show(
-            5,
-            truncate=False,
-        )
+        meteo_ready.show(5,truncate=False,)
 
-        print("\n=== DONNEES FINALES ===")
-        final_df.printSchema()
-        final_df.show(
-            5,
-            truncate=False,
-        )
+        print("\n\n=== DONNEES FINALES ENRICHIES ===")
+        final_ready.printSchema()
+
+        final_ready.show(5,truncate=False,)
 
     finally:
         spark.stop()
@@ -321,6 +356,9 @@ MongoDB
 
 JOIN :
 commune + datetime_15m
+
+             ↓
+création des features (year, month, day, hour, day_of_week, is_weekend, availability_rate)
 
              ↓
 
