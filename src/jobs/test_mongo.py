@@ -5,12 +5,13 @@ import os
 from src.utils.mongo import read_mongo_collection
 from src.utils.spark_session import get_spark_session
 
+
 def main():
     """Teste la lecture d'une collection MongoDB avec Spark."""
     spark = get_spark_session()
 
     database = os.getenv("MONGO_DATABASE", "velov_weather")
-    collection = "velov_availabilities"
+    collection = "velov_stations"
 
     print("=== Lecture MongoDB avec Spark ===")
 
@@ -27,6 +28,7 @@ def main():
     df.show(10, truncate=False)
 
     spark.stop()
+
 
 if __name__ == "__main__":
     main()
