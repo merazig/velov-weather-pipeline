@@ -6,3 +6,4 @@ data/velov
 src/extraction/__pycache__
 __pycache__
 backup
+*.gz
