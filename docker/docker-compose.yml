@@ -77,6 +77,7 @@ services:
 
     volumes:
       - ../src:/app/src
+      - ../tests:/app/tests
 
     environment:
       PYTHONPATH: /app/src
@@ -112,6 +113,7 @@ services:
 
     volumes:
       - ../src:/app/src
+      - ../tests:/app/tests
 
     environment:
       PYTHONPATH: /app/src
