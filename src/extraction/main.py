@@ -187,3 +187,44 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    """Vérification Mongodb:
+    Commence par entrer dans MongoDB :
+
+docker exec -it mongodb mongosh `
+  --username user `
+  --password password `
+  --authenticationDatabase admin
+
+  Ensuit: dans mongosh tape:
+
+  use velov_weather
+
+  Puis afficher les collections:
+
+  show collections
+    """
+
+
+    """Pour montrer combien de documents que j'ai:
+    db.velov_availabilities.countDocuments()
+
+    
+    db.velov_stations.countDocuments()
+
+    db.lyon_meteo.countDocuments()
+
+    """
+
+    """Pour afficher un document de chaque collection :
+    db.velov_availabilities.findOne()
+    db.velov_stations.findOne()
+    db.lyon_meteo.findOne()
+    
+    """
+    """Et pour afficher quelques lignes plus lisibles :
+    db.velov_availabilities.find().limit(5).pretty()
+
+    db.lyon_meteo.find().limit(5).pretty()
+    """

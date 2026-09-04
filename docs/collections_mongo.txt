@@ -1,0 +1,199 @@
+"""Vérifié les données dans Mongodb """
+docker exec -it mongodb mongosh `
+
+test> use velov_weather
+switched to db velov_weather
+velov_weather> show collections
+lyon_meteo
+velov_availabilities
+velov_stations
+velov_weather> db.velov_availabilities.countDocuments()
+45966665
+velov_weather> db.velov_stations.countDocuments()
+914
+velov_weather> db.lyon_meteo.countDocuments()
+1843968
+velov_weather> db.velov_availabilities.findOne()
+{
+  _id: ObjectId('6a97fe9a8c2385644c435c3f'),
+  horodate: '2023-01-05 00:58:09+01:00',
+  station_id: 1,
+  status: 'CLOSED',
+  capacity: 3,
+  bikes_available: 0,
+  stands_available: 0
+}
+velov_weather> db.velov_stations.findOne()
+{
+  _id: ObjectId('6a97fcee1699132b58410891'),
+  achevement: 'Monté',
+  adresse1: 'Face 140, Rue Bataille',
+  adresse2: null,
+  code_insee: '69388',
+  commune: 'Lyon 8e Arrondissement',
+  gid: 1,
+  idstation: 8050,
+  lat: 45.73626799350977,
+  lon: 4.879737377129184,
+  nbbornettes: 18,
+  nom: 'Bataille / Krüger',
+  numdansarrondissement: null,
+  ouverte: true,
+  pole: 'Logements',
+  stationbonus: null,
+  validite: 'Validé'
+}
+velov_weather> db.lyon_meteo.findOne()
+{
+  _id: ObjectId('6a97fe6c8c2385644c42f31c'),
+  commune: 'Albigny-sur-Saône',
+  location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+  datetime: ISODate('2023-01-01T00:00:00.000Z'),
+  temperature_2m_c: 14.5,
+  relative_humidity_2m_pct: 72,
+  apparent_temperature_c: 10.8,
+  precipitation_mm: 0,
+  rain_mm: 0,
+  snowfall_cm: 0,
+  weather_code: 1,
+  wind_speed_10m_kmh: 24.1,
+  wind_gusts_10m_kmh: 54,
+  is_day: false,
+  visibility_m: 24140
+}
+velov_weather> db.velov_availabilities.find().limit(5).pretty()
+[
+  {
+    _id: ObjectId('6a97fe9a8c2385644c435c3f'),
+    horodate: '2023-01-05 00:58:09+01:00',
+    station_id: 1,
+    status: 'CLOSED',
+    capacity: 3,
+    bikes_available: 0,
+    stands_available: 0
+  },
+  {
+    _id: ObjectId('6a97fe9a8c2385644c435c40'),
+    horodate: '2023-01-05 00:48:10+01:00',
+    station_id: 1,
+    status: 'CLOSED',
+    capacity: 3,
+    bikes_available: 0,
+    stands_available: 0
+  },
+  {
+    _id: ObjectId('6a97fe9a8c2385644c435c41'),
+    horodate: '2023-01-05 00:38:09+01:00',
+    station_id: 1,
+    status: 'CLOSED',
+    capacity: 3,
+    bikes_available: 0,
+    stands_available: 0
+  },
+  {
+    _id: ObjectId('6a97fe9a8c2385644c435c42'),
+    horodate: '2023-01-05 00:28:09+01:00',
+    station_id: 1,
+    status: 'CLOSED',
+    capacity: 3,
+    bikes_available: 0,
+    stands_available: 0
+  },
+  {
+    _id: ObjectId('6a97fe9a8c2385644c435c43'),
+    horodate: '2023-01-05 00:18:10+01:00',
+    station_id: 1,
+    status: 'CLOSED',
+    capacity: 3,
+    bikes_available: 0,
+    stands_available: 0
+  }
+]
+velov_weather> db.lyon_meteo.find().limit(5).pretty()
+[
+  {
+    _id: ObjectId('6a97fe6c8c2385644c42f31c'),
+    commune: 'Albigny-sur-Saône',
+    location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+    datetime: ISODate('2023-01-01T00:00:00.000Z'),
+    temperature_2m_c: 14.5,
+    relative_humidity_2m_pct: 72,
+    apparent_temperature_c: 10.8,
+    precipitation_mm: 0,
+    rain_mm: 0,
+    snowfall_cm: 0,
+    weather_code: 1,
+    wind_speed_10m_kmh: 24.1,
+    wind_gusts_10m_kmh: 54,
+    is_day: false,
+    visibility_m: 24140
+  },
+  {
+    _id: ObjectId('6a97fe6c8c2385644c42f31d'),
+    commune: 'Albigny-sur-Saône',
+    location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+    datetime: ISODate('2023-01-01T00:15:00.000Z'),
+    temperature_2m_c: 14.4,
+    relative_humidity_2m_pct: 73,
+    apparent_temperature_c: 10.9,
+    precipitation_mm: 0,
+    rain_mm: 0,
+    snowfall_cm: 0,
+    weather_code: 1,
+    wind_speed_10m_kmh: 22.7,
+    wind_gusts_10m_kmh: 52.2,
+    is_day: false,
+    visibility_m: 24140
+  },
+  {
+    _id: ObjectId('6a97fe6c8c2385644c42f31e'),
+    commune: 'Albigny-sur-Saône',
+    location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+    datetime: ISODate('2023-01-01T00:30:00.000Z'),
+    temperature_2m_c: 14.2,
+    relative_humidity_2m_pct: 73,
+    apparent_temperature_c: 11,
+    precipitation_mm: 0,
+    rain_mm: 0,
+    snowfall_cm: 0,
+    weather_code: 1,
+    wind_speed_10m_kmh: 21.3,
+    wind_gusts_10m_kmh: 49.3,
+    is_day: false,
+    visibility_m: 24140
+  },
+  {
+    _id: ObjectId('6a97fe6c8c2385644c42f31f'),
+    commune: 'Albigny-sur-Saône',
+    location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+    datetime: ISODate('2023-01-01T00:45:00.000Z'),
+    temperature_2m_c: 14.2,
+    relative_humidity_2m_pct: 74,
+    apparent_temperature_c: 11.1,
+    precipitation_mm: 0,
+    rain_mm: 0,
+    snowfall_cm: 0,
+    weather_code: 1,
+    wind_speed_10m_kmh: 20.2,
+    wind_gusts_10m_kmh: 46.1,
+    is_day: false,
+    visibility_m: 24140
+  },
+  {
+    _id: ObjectId('6a97fe6c8c2385644c42f320'),
+    commune: 'Albigny-sur-Saône',
+    location: { type: 'Point', coordinates: [ 4.833002, 45.874994 ] },
+    datetime: ISODate('2023-01-01T01:00:00.000Z'),
+    temperature_2m_c: 14.1,
+    relative_humidity_2m_pct: 74,
+    apparent_temperature_c: 11.1,
+    precipitation_mm: 0,
+    rain_mm: 0,
+    snowfall_cm: 0,
+    weather_code: 1,
+    wind_speed_10m_kmh: 19.5,
+    wind_gusts_10m_kmh: 43.2,
+    is_day: false,
+    visibility_m: 24140
+  }
+]

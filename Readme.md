@@ -658,6 +658,67 @@ Cette organisation permet à Spark de limiter les données lues lorsqu'une analy
 
 ---
 
+## Vérification des données MongoDB
+
+Après la collecte, il est possible de vérifier que les données ont bien été insérées dans MongoDB.
+
+### Se connecter à MongoDB
+
+```powershell
+docker exec -it mongodb mongosh `
+  --username <MONGO_USERNAME> `
+  --password <MONGO_PASSWORD> `
+  --authenticationDatabase admin
+```
+
+Les valeurs correspondent aux variables définies dans le fichier `.env`.
+
+### Sélectionner la base de données
+
+Dans `mongosh` :
+
+```javascript
+use <MONGO_DATABASE>
+```
+
+### Afficher les collections
+
+```javascript
+show collections
+```
+
+Les principales collections du projet sont :
+
+```text
+velov_stations
+velov_availabilities
+lyon_meteo
+```
+
+### Vérifier le nombre de documents
+
+```javascript
+db.velov_stations.countDocuments()
+db.velov_availabilities.countDocuments()
+db.lyon_meteo.countDocuments()
+```
+
+### Afficher quelques documents
+
+```javascript
+db.velov_stations.find().limit(5).pretty()
+```
+
+```javascript
+db.velov_availabilities.find().limit(5).pretty()
+```
+
+```javascript
+db.lyon_meteo.find().limit(5).pretty()
+```
+
+Ces commandes permettent de vérifier que les données issues des API ont bien été collectées et stockées dans MongoDB avant leur traitement avec Spark.
+
 ## 18. Lancer la transformation Silver
 
 Depuis PowerShell :
