@@ -4,7 +4,13 @@ USER root
 
 WORKDIR /app
 
-RUN curl -fL https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.2/hadoop-aws-3.4.2.jar -o /opt/spark/jars/hadoop-aws-3.4.2.jar
+RUN curl -fL \ 
+    https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.4.2/hadoop-aws-3.4.2.jar \
+    -o /opt/spark/jars/hadoop-aws-3.4.2.jar
+
+RUN curl -fL \
+    https://repo1.maven.org/maven2/software/amazon/awssdk/bundle/2.29.52/bundle-2.29.52.jar \
+    -o /opt/spark/jars/bundle-2.29.52.jar
 
 COPY src ./src
 
