@@ -1,16 +1,26 @@
-"""Nettoie, prépare et joint les sources MongoDB avec PySpark."""
+"""Nettoie, prépare, joint et écrit les données dans MinIO Silver."""
 
 from pyspark.sql import functions as F
 
+from utils.minio_config import configure_minio
 from utils.spark_session import get_spark_session
 
 
-def read_collection(spark, collection_name):
+SILVER_PATH = "s3a://datalake/silver/velov_weather"
+
+
+def read_collection(
+    spark,
+    collection_name,
+):
     """Lit une collection MongoDB avec Spark."""
     return (
         spark.read
         .format("mongodb")
-        .option("collection", collection_name)
+        .option(
+            "collection",
+            collection_name,
+        )
         .load()
     )
 
@@ -19,17 +29,6 @@ def transform_velov(df):
     """Nettoie les disponibilités Vélo'v."""
     return (
         df
-        .dropDuplicates()
-        .dropna(
-            subset=[
-                "station_id",
-                "horodate",
-            ]
-        )
-        .withColumn(
-            "horodate",
-            F.to_timestamp("horodate"),
-        )
         .select(
             "station_id",
             "horodate",
@@ -38,6 +37,24 @@ def transform_velov(df):
             "capacity",
             "status",
         )
+        .dropna(
+            subset=[
+                "station_id",
+                "horodate",
+            ]
+        )
+        .withColumn(
+            "horodate",
+            F.to_timestamp(
+                "horodate"
+            ),
+        )
+        .dropDuplicates(
+            [
+                "station_id",
+                "horodate",
+            ]
+        )
     )
 
 
@@ -45,15 +62,6 @@ def transform_stations(df):
     """Nettoie le référentiel des stations."""
     return (
         df
-        .dropDuplicates(["idstation"])
-        .dropna(
-            subset=[
-                "idstation",
-                "commune",
-                "lat",
-                "lon",
-            ]
-        )
         .select(
             "idstation",
             "nom",
@@ -63,6 +71,17 @@ def transform_stations(df):
             "nbbornettes",
             "ouverte",
         )
+        .dropna(
+            subset=[
+                "idstation",
+                "commune",
+                "lat",
+                "lon",
+            ]
+        )
+        .dropDuplicates(
+            ["idstation"]
+        )
     )
 
 
@@ -70,13 +89,6 @@ def transform_meteo(df):
     """Nettoie les données météo."""
     return (
         df
-        .dropDuplicates()
-        .dropna(
-            subset=[
-                "commune",
-                "datetime",
-            ]
-        )
         .select(
             "commune",
             "datetime",
@@ -91,6 +103,18 @@ def transform_meteo(df):
             "wind_gusts_10m_kmh",
             "visibility_m",
             "is_day",
+        )
+        .dropna(
+            subset=[
+                "commune",
+                "datetime",
+            ]
+        )
+        .dropDuplicates(
+            [
+                "commune",
+                "datetime",
+            ]
         )
     )
 
@@ -109,7 +133,7 @@ def enrich_velov_with_stations(
             "left",
         )
         .drop(
-            stations_df["idstation"],
+            stations_df["idstation"]
         )
     )
 
@@ -131,17 +155,21 @@ def add_15_min_bucket(
         * 900
     )
 
-    return df.withColumn(
-        "datetime_15m",
-        F.to_timestamp(
-            F.from_unixtime(
-                bucket_seconds
-            )
-        ),
+    return (
+        df
+        .withColumn(
+            "datetime_15m",
+            F.to_timestamp(
+                F.from_unixtime(
+                    bucket_seconds
+                )
+            ),
+        )
     )
 
+
 def add_time_features(df):
-    """Ajoute des variables temporelles utiles à l'analyse."""
+    """Ajoute les variables temporelles et le taux de disponibilité."""
     return (
         df
         .withColumn(
@@ -166,7 +194,10 @@ def add_time_features(df):
         )
         .withColumn(
             "is_weekend",
-            F.col("day_of_week").isin(1, 7),
+            F.col("day_of_week").isin(
+                1,
+                7,
+            ),
         )
         .withColumn(
             "availability_rate",
@@ -178,75 +209,14 @@ def add_time_features(df):
         )
     )
 
-def build_metrics(df):
-    """Calcule des indicateurs décisionnels par commune, date et heure."""
-    return (
-        df
-        .groupBy(
-            "commune",
-            "year",
-            "month",
-            "day",
-            "hour",
-        )
-        .agg(
-            F.avg("bikes_available").alias(
-                "avg_bikes_available"
-            ),
-            F.avg("stands_available").alias(
-                "avg_stands_available"
-            ),
-            F.avg("availability_rate").alias(
-                "avg_availability_rate"
-            ),
-            F.avg("temperature_2m_c").alias(
-                "avg_temperature_2m_c"
-            ),
-            F.avg("relative_humidity_2m_pct").alias(
-                "avg_humidity_pct"
-            ),
-            F.sum("rain_mm").alias(
-                "total_rain_mm"
-            ),
-            F.avg("wind_speed_10m_kmh").alias(
-                "avg_wind_speed_kmh"
-            ),
-            F.count("*").alias(
-                "observation_count"
-            ),
-        )
-    )
-# comparer la disponibilité moyenne selon qu’il pleut ou non
 
-def build_weather_impact_metrics(df):
-    """Compare la disponibilité des vélos selon les conditions météo."""
-    return (
-        df
-        .withColumn(
-            "is_raining",
-            F.col("rain_mm") > 0,
-        )
-        .groupBy(
-            "commune",
-            "is_raining",
-        )
-        .agg(
-            F.avg("availability_rate").alias(
-                "avg_availability_rate"
-            ),
-            F.avg("bikes_available").alias(
-                "avg_bikes_available"
-            ),
-            F.count("*").alias(
-                "observation_count"
-            ),
-        )
-    )
 def main():
-    """Lit, transforme et joint les sources."""
+    """Lit, transforme et écrit les données dans MinIO Silver."""
     spark = get_spark_session(
         "TransformSources"
     )
+
+    configure_minio(spark)
 
     try:
         # Lecture MongoDB
@@ -278,7 +248,7 @@ def main():
             meteo_df
         )
 
-        # Enrichissement Vélo'v avec les stations
+        # Jointure Vélo'v + stations
         velov_enriched = (
             enrich_velov_with_stations(
                 velov_clean,
@@ -286,8 +256,8 @@ def main():
             )
         )
 
-        # On garde seulement les lignes
-        # ayant une station / commune connue
+        # Suppression des lignes
+        # sans commune correspondante
         velov_enriched_clean = (
             velov_enriched
             .filter(
@@ -295,14 +265,15 @@ def main():
             )
         )
 
-        # Création de la tranche de 15 minutes
-        velov_ready = add_15_min_bucket(
-            velov_enriched_clean,
-            "horodate",
+        # Création de la tranche 15 minutes
+        velov_ready = (
+            add_15_min_bucket(
+                velov_enriched_clean,
+                "horodate",
+            )
         )
 
-        # La météo est déjà disponible
-        # toutes les 15 minutes
+        # Préparation météo
         meteo_ready = (
             meteo_clean
             .withColumnRenamed(
@@ -323,39 +294,45 @@ def main():
                 how="left",
             )
         )
-        final_ready = add_time_features(
+
+        # Features analytiques
+        final_ready = (
+            add_time_features(
                 final_df
             )
+        )
 
-        metrics_df = build_metrics(
-             final_ready
-            )
+        print(
+            "\n=== DONNEES FINALES ENRICHIES ==="
+        )
 
+        final_ready.printSchema()
 
-        print("\n\n=== VELOV READY ===")
-        velov_ready.printSchema()
-        velov_ready.show(
+        final_ready.show(
             5,
             truncate=False,
         )
 
-        print("\n\n=== METEO READY ===")
-        meteo_ready.printSchema()
-        meteo_ready.show(5,truncate=False,)
+        # Écriture Silver
+        print(
+            "\n=== ECRITURE SILVER DANS MINIO ==="
+        )
 
-        print("\n\n=== DONNEES FINALES ENRICHIES ===")
-        final_ready.printSchema()
+        (
+            final_ready
+            .write
+            .mode("overwrite")
+            .partitionBy(
+                "year",
+                "month",
+            )
+            .parquet(
+                SILVER_PATH
+            )
+        )
 
-        final_ready.show(5,truncate=False,)
-
-
-        print("\n=== INDICATEURS DECISIONNELS ===")
-
-        metrics_df.printSchema()
-
-        metrics_df.show(
-            10,
-            truncate=False,
+        print(
+            "Écriture Silver terminée."
         )
 
     finally:
@@ -365,6 +342,7 @@ def main():
 if __name__ == "__main__":
     main()
 
+
 # lancer le job avec la commande suivante dans le terminal : (copy/paste dans le terminal)
 
     """
@@ -373,9 +351,26 @@ docker exec -it spark-master /opt/spark/bin/spark-submit `
   --executor-memory 3g `
   --executor-cores 4 `
   --conf spark.jars.ivy=/tmp/ivy `
-  --packages org.mongodb.spark:mongo-spark-connector_2.13:11.1.0 `
+  --packages org.mongodb.spark:mongo-spark-connector_2.13:11.1.0,org.apache.hadoop:hadoop-aws:3.4.2 `
   /app/src/jobs/transform_sources.py
     
+    """
+    # puis pour vérifier dans Minio:
+    """
+    docker exec minio mc ls --recursive local/datalake/silver
+    """
+
+  # pour vérifié dans MINIO que les fichiers Parquet ont bien été écrits,
+  # on peut utiliser la commande suivante dans le terminal :
+
+    """
+    docker exec minio mc ls local/datalake/silver/velov_weather
+    """  
+
+  # Et pour vérifier le partitionnement :
+
+    """
+    docker exec minio mc ls local/datalake/silver/velov_weather/year=2023
     """
 
     """
@@ -438,19 +433,12 @@ MongoDB
 création des features (year, month, day, hour, day_of_week, is_weekend, availability_rate)
              ↓
          final_df
-             ↓
-        agrégations
-             ↓
-        metrics_df (indicateurs horaires par commune)
             ↓
-        weather_impact_df
-        → impact pluie / météo sur la disponibilité
-           
+         MinIO Silver          
 
 """
 """
 les resultats des indicateurs décisionnels fonctionnent:
-
     Par exemple, pour Albigny-sur-Saône, le 23/02/2023 entre 10h et 11h,
     Spark a regroupé 9 observations et calculé :
     environ 4,44 vélos disponibles, 13,56 places disponibles,
