@@ -20,8 +20,7 @@ def read_mongo_collection(
     uri = f"mongodb://{username}:{password}@{host}:{port}/?authSource=admin"
 
     reader = (
-        spark.read
-        .format("mongodb")
+        spark.read.format("mongodb")
         .option("spark.mongodb.read.connection.uri", uri)
         .option("spark.mongodb.read.database", database)
         .option("spark.mongodb.read.collection", collection)

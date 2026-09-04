@@ -71,7 +71,6 @@ def get_velov_availabilities(url, maxfeatures, start, debut, fin):
             "stands_available": availabilities_data.get("stands"),
         }
 
-
         availabilities.append(availability)
     """
     filename = f"data/velov/availabilities{start}_{start + len(availabilities) - 1}.json"
@@ -80,4 +79,3 @@ def get_velov_availabilities(url, maxfeatures, start, debut, fin):
         json.dump(availabilities, f, ensure_ascii=False)
     """
     return availabilities
-
