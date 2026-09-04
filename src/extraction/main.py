@@ -112,7 +112,6 @@ def main():
     date_courante = date_debut
 
     while date_courante < date_aujourd_hui:
-
         debut_semaine = date_courante
         fin_semaine = date_courante + timedelta(days=7)
 
@@ -123,13 +122,9 @@ def main():
         # ========================================================
         # MÉTÉO
         # ========================================================
-        
-        for commune, coordinates in coordonnees.items():
 
-            print(
-                f"Collect météo : {commune} | "
-                f"{debut_semaine} → {fin_semaine}"
-            )
+        for commune, coordinates in coordonnees.items():
+            print(f"Collect météo : {commune} | {debut_semaine} → {fin_semaine}")
 
             data = collect_meteo(
                 commune,
@@ -143,18 +138,12 @@ def main():
                 "lyon_meteo",
             )
 
-            print(
-                f"{commune} : "
-                f"{result} données météo insérées"
-            )
+            print(f"{commune} : {result} données météo insérées")
             time.sleep(1)
-        
+
         print()
         print("========================================")
-        print(
-            f"Collect Velov : "
-            f"{debut_semaine} → {fin_semaine}"
-        )
+        print(f"Collect Velov : {debut_semaine} → {fin_semaine}")
         print("========================================")
 
         # ========================================================
@@ -164,7 +153,6 @@ def main():
         start = 1
 
         while True:
-
             data = get_velov_availabilities(
                 url_availabilities,
                 maxfeatures,
@@ -182,17 +170,13 @@ def main():
                 "velov_availabilities",
             )
 
-            print(
-                f"start={start} | "
-                f"{result} disponibilités insérées"
-            )
+            print(f"start={start} | {result} disponibilités insérées")
 
             # Dernière page
             if len(data) < maxfeatures:
                 break
 
             start += maxfeatures
-
 
         # ========================================================
         # SEMAINE SUIVANTE
@@ -203,4 +187,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

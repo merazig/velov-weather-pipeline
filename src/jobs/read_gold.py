@@ -10,19 +10,13 @@ WEATHER_PATH = "s3a://datalake/gold/weather_impact"
 
 def main():
     """Lit et affiche les datasets Gold."""
-
-    spark = get_spark_session(
-        "ReadGold"
-    )
+    spark = get_spark_session("ReadGold")
 
     configure_minio(spark)
 
     try:
         # Indicateurs décisionnels
-        metrics_df = (
-            spark.read
-            .parquet(METRICS_PATH)
-        )
+        metrics_df = spark.read.parquet(METRICS_PATH)
 
         print("\n=== INDICATEURS DECISIONNELS ===")
 
@@ -38,10 +32,7 @@ def main():
         )
 
         # Impact météo
-        weather_df = (
-            spark.read
-            .parquet(WEATHER_PATH)
-        )
+        weather_df = spark.read.parquet(WEATHER_PATH)
 
         print("\n=== IMPACT DE LA METEO ===")
 

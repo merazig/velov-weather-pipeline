@@ -25,13 +25,7 @@ from jobs.transform_sources import (
 @pytest.fixture(scope="session")
 def spark():
     """Crée une SparkSession locale pour les tests."""
-
-    session = (
-        SparkSession.builder
-        .master("local[2]")
-        .appName("PySparkTests")
-        .getOrCreate()
-    )
+    session = SparkSession.builder.master("local[2]").appName("PySparkTests").getOrCreate()
 
     session.sparkContext.setLogLevel("WARN")
 
@@ -42,7 +36,6 @@ def spark():
 
 def test_transform_velov(spark):
     """Vérifie le nettoyage et la déduplication des données Vélo'v."""
-
     schema = StructType(
         [
             StructField("station_id", IntegerType(), True),
@@ -112,7 +105,6 @@ def test_transform_velov(spark):
 
 def test_transform_stations(spark):
     """Vérifie le nettoyage du référentiel des stations."""
-
     schema = StructType(
         [
             StructField("idstation", IntegerType(), True),
@@ -174,7 +166,6 @@ def test_transform_stations(spark):
 
 def test_transform_meteo(spark):
     """Vérifie le nettoyage et la déduplication météo."""
-
     schema = StructType(
         [
             StructField("commune", StringType(), True),
@@ -298,7 +289,6 @@ def test_transform_meteo(spark):
 
 def test_add_15_min_bucket(spark):
     """Vérifie l'arrondi des horaires au quart d'heure inférieur."""
-
     data = [
         (
             1,
@@ -417,17 +407,13 @@ def test_add_15_min_bucket(spark):
         ),
     ]
 
-    actual = [
-        row["datetime_15m"]
-        for row in result
-    ]
+    actual = [row["datetime_15m"] for row in result]
 
     assert actual == expected
 
 
 def test_add_time_features(spark):
     """Vérifie les variables temporelles et le taux de disponibilité."""
-
     data = [
         (
             datetime(
@@ -464,11 +450,7 @@ def test_add_time_features(spark):
         ],
     )
 
-    result = (
-        add_time_features(df)
-        .orderBy("horodate")
-        .collect()
-    )
+    result = add_time_features(df).orderBy("horodate").collect()
 
     sunday = result[0]
 
@@ -478,9 +460,7 @@ def test_add_time_features(spark):
     assert sunday["hour"] == 10
     assert sunday["day_of_week"] == 1
     assert sunday["is_weekend"] is True
-    assert sunday["availability_rate"] == pytest.approx(
-        0.5
-    )
+    assert sunday["availability_rate"] == pytest.approx(0.5)
 
     monday = result[1]
 
@@ -490,10 +470,7 @@ def test_add_time_features(spark):
     assert monday["hour"] == 15
     assert monday["day_of_week"] == 2
     assert monday["is_weekend"] is False
-    assert monday["availability_rate"] == pytest.approx(
-        0.5
-    )
-
+    assert monday["availability_rate"] == pytest.approx(0.5)
 
     """Execute: Commande PowerShell pour lancer les tests :
 

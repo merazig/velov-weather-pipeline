@@ -15,8 +15,7 @@ def read_collection(
 ):
     """Lit une collection MongoDB avec Spark."""
     return (
-        spark.read
-        .format("mongodb")
+        spark.read.format("mongodb")
         .option(
             "collection",
             collection_name,
@@ -28,8 +27,7 @@ def read_collection(
 def transform_velov(df):
     """Nettoie les disponibilités Vélo'v."""
     return (
-        df
-        .select(
+        df.select(
             "station_id",
             "horodate",
             "bikes_available",
@@ -45,9 +43,7 @@ def transform_velov(df):
         )
         .withColumn(
             "horodate",
-            F.to_timestamp(
-                "horodate"
-            ),
+            F.to_timestamp("horodate"),
         )
         .dropDuplicates(
             [
@@ -61,8 +57,7 @@ def transform_velov(df):
 def transform_stations(df):
     """Nettoie le référentiel des stations."""
     return (
-        df
-        .select(
+        df.select(
             "idstation",
             "nom",
             "commune",
@@ -79,17 +74,14 @@ def transform_stations(df):
                 "lon",
             ]
         )
-        .dropDuplicates(
-            ["idstation"]
-        )
+        .dropDuplicates(["idstation"])
     )
 
 
 def transform_meteo(df):
     """Nettoie les données météo."""
     return (
-        df
-        .select(
+        df.select(
             "commune",
             "datetime",
             "temperature_2m_c",
@@ -124,18 +116,11 @@ def enrich_velov_with_stations(
     stations_df,
 ):
     """Ajoute les informations des stations aux données Vélo'v."""
-    return (
-        velov_df
-        .join(
-            stations_df,
-            velov_df["station_id"]
-            == stations_df["idstation"],
-            "left",
-        )
-        .drop(
-            stations_df["idstation"]
-        )
-    )
+    return velov_df.join(
+        stations_df,
+        velov_df["station_id"] == stations_df["idstation"],
+        "left",
+    ).drop(stations_df["idstation"])
 
 
 def add_15_min_bucket(
@@ -143,36 +128,20 @@ def add_15_min_bucket(
     timestamp_column,
 ):
     """Arrondit un timestamp au quart d'heure inférieur."""
-    timestamp_seconds = (
-        F.col(timestamp_column)
-        .cast("long")
-    )
+    timestamp_seconds = F.col(timestamp_column).cast("long")
 
-    bucket_seconds = (
-        F.floor(
-            timestamp_seconds / 900
-        )
-        * 900
-    )
+    bucket_seconds = F.floor(timestamp_seconds / 900) * 900
 
-    return (
-        df
-        .withColumn(
-            "datetime_15m",
-            F.to_timestamp(
-                F.from_unixtime(
-                    bucket_seconds
-                )
-            ),
-        )
+    return df.withColumn(
+        "datetime_15m",
+        F.to_timestamp(F.from_unixtime(bucket_seconds)),
     )
 
 
 def add_time_features(df):
     """Ajoute les variables temporelles et le taux de disponibilité."""
     return (
-        df
-        .withColumn(
+        df.withColumn(
             "year",
             F.year("horodate"),
         )
@@ -203,8 +172,7 @@ def add_time_features(df):
             "availability_rate",
             F.when(
                 F.col("capacity") > 0,
-                F.col("bikes_available")
-                / F.col("capacity"),
+                F.col("bikes_available") / F.col("capacity"),
             ).otherwise(None),
         )
     )
@@ -212,9 +180,7 @@ def add_time_features(df):
 
 def main():
     """Lit, transforme et écrit les données dans MinIO Silver."""
-    spark = get_spark_session(
-        "TransformSources"
-    )
+    spark = get_spark_session("TransformSources")
 
     configure_minio(spark)
 
@@ -236,75 +202,48 @@ def main():
         )
 
         # Nettoyage
-        velov_clean = transform_velov(
-            velov_df
-        )
+        velov_clean = transform_velov(velov_df)
 
-        stations_clean = transform_stations(
-            stations_df
-        )
+        stations_clean = transform_stations(stations_df)
 
-        meteo_clean = transform_meteo(
-            meteo_df
-        )
+        meteo_clean = transform_meteo(meteo_df)
 
         # Jointure Vélo'v + stations
-        velov_enriched = (
-            enrich_velov_with_stations(
-                velov_clean,
-                stations_clean,
-            )
+        velov_enriched = enrich_velov_with_stations(
+            velov_clean,
+            stations_clean,
         )
 
         # Suppression des lignes
         # sans commune correspondante
-        velov_enriched_clean = (
-            velov_enriched
-            .filter(
-                F.col("commune").isNotNull()
-            )
-        )
+        velov_enriched_clean = velov_enriched.filter(F.col("commune").isNotNull())
 
         # Création de la tranche 15 minutes
-        velov_ready = (
-            add_15_min_bucket(
-                velov_enriched_clean,
-                "horodate",
-            )
+        velov_ready = add_15_min_bucket(
+            velov_enriched_clean,
+            "horodate",
         )
 
         # Préparation météo
-        meteo_ready = (
-            meteo_clean
-            .withColumnRenamed(
-                "datetime",
-                "datetime_15m",
-            )
+        meteo_ready = meteo_clean.withColumnRenamed(
+            "datetime",
+            "datetime_15m",
         )
 
         # Jointure spatio-temporelle
-        final_df = (
-            velov_ready
-            .join(
-                meteo_ready,
-                on=[
-                    "commune",
-                    "datetime_15m",
-                ],
-                how="left",
-            )
+        final_df = velov_ready.join(
+            meteo_ready,
+            on=[
+                "commune",
+                "datetime_15m",
+            ],
+            how="left",
         )
 
         # Features analytiques
-        final_ready = (
-            add_time_features(
-                final_df
-            )
-        )
+        final_ready = add_time_features(final_df)
 
-        print(
-            "\n=== DONNEES FINALES ENRICHIES ==="
-        )
+        print("\n=== DONNEES FINALES ENRICHIES ===")
 
         final_ready.printSchema()
 
@@ -314,26 +253,18 @@ def main():
         )
 
         # Écriture Silver
-        print(
-            "\n=== ECRITURE SILVER DANS MINIO ==="
-        )
+        print("\n=== ECRITURE SILVER DANS MINIO ===")
 
         (
-            final_ready
-            .write
-            .mode("overwrite")
+            final_ready.write.mode("overwrite")
             .partitionBy(
                 "year",
                 "month",
             )
-            .parquet(
-                SILVER_PATH
-            )
+            .parquet(SILVER_PATH)
         )
 
-        print(
-            "Écriture Silver terminée."
-        )
+        print("Écriture Silver terminée.")
 
     finally:
         spark.stop()
@@ -342,8 +273,7 @@ def main():
 if __name__ == "__main__":
     main()
 
-
-# lancer le job avec la commande suivante dans le terminal : (copy/paste dans le terminal)
+    # lancer le job avec la commande suivante dans le terminal : (copy/paste dans le terminal)
 
     """
 docker exec -it spark-master /opt/spark/bin/spark-submit `
@@ -351,23 +281,25 @@ docker exec -it spark-master /opt/spark/bin/spark-submit `
   --executor-memory 3g `
   --executor-cores 4 `
   --conf spark.jars.ivy=/tmp/ivy `
-  --packages org.mongodb.spark:mongo-spark-connector_2.13:11.1.0,org.apache.hadoop:hadoop-aws:3.4.2 `
+  --packages `
+  org.mongodb.spark:mongo-spark-connector_2.13:11.1.0,`
+  org.apache.hadoop:hadoop-aws:3.4.2 `
   /app/src/jobs/transform_sources.py
-    
+  
     """
     # puis pour vérifier dans Minio:
     """
     docker exec minio mc ls --recursive local/datalake/silver
     """
 
-  # pour vérifié dans MINIO que les fichiers Parquet ont bien été écrits,
-  # on peut utiliser la commande suivante dans le terminal :
+    # pour vérifié dans MINIO que les fichiers Parquet ont bien été écrits,
+    # on peut utiliser la commande suivante dans le terminal :
 
     """
     docker exec minio mc ls local/datalake/silver/velov_weather
-    """  
+    """
 
-  # Et pour vérifier le partitionnement :
+    # Et pour vérifier le partitionnement :
 
     """
     docker exec minio mc ls local/datalake/silver/velov_weather/year=2023

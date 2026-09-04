@@ -5,11 +5,7 @@ import os
 
 def configure_minio(spark):
     """Configure Hadoop S3A pour accéder à MinIO."""
-    hadoop_conf = (
-        spark.sparkContext
-        ._jsc
-        .hadoopConfiguration()
-    )
+    hadoop_conf = spark.sparkContext._jsc.hadoopConfiguration()
 
     hadoop_conf.set(
         "fs.s3a.endpoint",

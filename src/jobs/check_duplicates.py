@@ -11,35 +11,22 @@ SILVER_PATH = "s3a://datalake/silver/velov_weather"
 
 def main():
     """Vérifie les doublons dans les données Silver."""
-
-    spark = get_spark_session(
-        "CheckSilverDuplicates"
-    )
+    spark = get_spark_session("CheckSilverDuplicates")
 
     configure_minio(spark)
 
     try:
-        silver_df = (
-            spark.read
-            .parquet(
-                SILVER_PATH
-            )
-        )
+        silver_df = spark.read.parquet(SILVER_PATH)
 
-        print(
-            "\n=== DOUBLONS SUR station_id + horodate ==="
-        )
+        print("\n=== DOUBLONS SUR station_id + horodate ===")
 
         duplicate_keys = (
-            silver_df
-            .groupBy(
+            silver_df.groupBy(
                 "station_id",
                 "horodate",
             )
             .count()
-            .filter(
-                F.col("count") > 1
-            )
+            .filter(F.col("count") > 1)
         )
 
         duplicate_keys.show(
@@ -47,43 +34,26 @@ def main():
             truncate=False,
         )
 
-        duplicate_key_count = (
-            duplicate_keys.count()
-        )
+        duplicate_key_count = duplicate_keys.count()
 
         print(
-            "Nombre de clés station_id + horodate "
-            "en doublon :",
+            "Nombre de clés station_id + horodate en doublon :",
             duplicate_key_count,
         )
 
-        print(
-            "\n=== DOUBLONS EXACTS ==="
-        )
+        print("\n=== DOUBLONS EXACTS ===")
 
-        duplicate_rows = (
-            silver_df
-            .groupBy(
-                silver_df.columns
-            )
-            .count()
-            .filter(
-                F.col("count") > 1
-            )
-        )
+        duplicate_rows = silver_df.groupBy(silver_df.columns).count().filter(F.col("count") > 1)
 
         duplicate_rows.show(
             20,
             truncate=False,
         )
 
-        duplicate_row_count = (
-            duplicate_rows.count()
-        )
+        duplicate_row_count = duplicate_rows.count()
 
         print(
-            "Nombre de groupes "
-            "de doublons exacts :",
+            "Nombre de groupes de doublons exacts :",
             duplicate_row_count,
         )
 

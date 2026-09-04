@@ -15,15 +15,10 @@ def main():
 
     collection = "velov_availabilities"
 
-    mongo_uri = (
-        f"mongodb://{username}:{password}"
-        f"@{host}:{port}/{database}"
-        "?authSource=admin"
-    )
+    mongo_uri = f"mongodb://{username}:{password}@{host}:{port}/{database}?authSource=admin"
 
     spark = (
-        SparkSession.builder
-        .appName("ReadMongoDB")
+        SparkSession.builder.appName("ReadMongoDB")
         .master("spark://spark-master:7077")
         .config(
             "spark.mongodb.read.connection.uri",
@@ -40,15 +35,11 @@ def main():
         .getOrCreate()
     )
 
-# Réduction des logs
+    # Réduction des logs
     spark.sparkContext.setLogLevel("WARN")
 
     try:
-        df = (
-            spark.read
-            .format("mongodb")
-            .load()
-        )
+        df = spark.read.format("mongodb").load()
 
         print("=== SCHÉMA MONGODB ===")
         df.printSchema()

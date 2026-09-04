@@ -5,12 +5,7 @@ from utils.spark_session import get_spark_session
 
 def read_collection(spark, collection_name):
     """Lit une collection MongoDB avec Spark."""
-    return (
-        spark.read
-        .format("mongodb")
-        .option("collection", collection_name)
-        .load()
-    )
+    return spark.read.format("mongodb").option("collection", collection_name).load()
 
 
 def show_source(dataframe, source_name):
@@ -24,17 +19,12 @@ def show_source(dataframe, source_name):
         truncate=False,
     )
 
-    print(
-        f"Partitions {source_name} : "
-        f"{dataframe.rdd.getNumPartitions()}"
-    )
+    print(f"Partitions {source_name} : {dataframe.rdd.getNumPartitions()}")
 
 
 def main():
     """Lit et explore les trois collections MongoDB."""
-    spark = get_spark_session(
-        "ReadMongoSources"
-    )
+    spark = get_spark_session("ReadMongoSources")
 
     try:
         velov_df = read_collection(
@@ -74,9 +64,9 @@ def main():
 if __name__ == "__main__":
     main()
 
-# pour lancer le script, utilisez la commande suivante dans le terminal de votre machine hôte 
-# (assurez-vous que les conteneurs Docker sont en cours d'exécution) :
-    
+    # pour lancer le script, utilisez la commande suivante dans le terminal de votre machine hôte
+    # (assurez-vous que les conteneurs Docker sont en cours d'exécution) :
+
     """
 docker exec -it spark-master /opt/spark/bin/spark-submit `
   --master spark://spark-master:7077 `
