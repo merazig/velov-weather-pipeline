@@ -1,4 +1,6 @@
-"""Lit et affiche les résultats Gold stockés dans MinIO."""
+"""Lit et affiche les résultats Gold de l'année 2023."""
+
+from pyspark.sql import functions as F
 
 from utils.minio_config import configure_minio
 from utils.spark_session import get_spark_session
@@ -9,41 +11,98 @@ WEATHER_PATH = "s3a://datalake/gold/weather_impact"
 
 
 def main():
-    """Lit et affiche les datasets Gold."""
-    spark = get_spark_session("ReadGold")
+    """Lit et affiche les résultats Gold pour 2023."""
+
+    spark = get_spark_session(
+        "ReadGold2023"
+    )
 
     configure_minio(spark)
 
     try:
-        # Indicateurs décisionnels
-        metrics_df = spark.read.parquet(METRICS_PATH)
-
-        print("\n=== INDICATEURS DECISIONNELS ===")
-
-        metrics_df.orderBy(
-            "year",
-            "month",
-            "day",
-            "hour",
-            "commune",
-        ).show(
-            50,
-            truncate=False,
+        metrics_df = (
+            spark.read
+            .parquet(
+                METRICS_PATH
+            )
+            .filter(
+                F.col("year") == 2023
+            )
         )
 
-        # Impact météo
-        weather_df = spark.read.parquet(WEATHER_PATH)
+        weather_df = (
+            spark.read
+            .parquet(
+                WEATHER_PATH
+            )
+            .filter(
+                F.col("year") == 2023
+            )
+        )
 
-        print("\n=== IMPACT DE LA METEO ===")
+        print("\n=== METRICS GOLD - 2023 ===")
 
-        weather_df.orderBy(
-            "year",
-            "month",
-            "commune",
-            "is_raining",
-        ).show(
-            50,
-            truncate=False,
+        (
+            metrics_df
+            .orderBy(
+                "month",
+                "day",
+                "hour",
+                "commune",
+            )
+            .show(
+                50,
+                truncate=False,
+            )
+        )
+
+        print("\n=== WEATHER IMPACT GOLD - 2023 ===")
+
+        (
+            weather_df
+            .orderBy(
+                "month",
+                "commune",
+                "is_raining",
+            )
+            .show(
+                50,
+                truncate=False,
+            )
+        )
+
+        print("\n=== LYON 1ER - SEPTEMBRE 2023 ===")
+
+        (
+            metrics_df
+            .filter(
+                (F.col("commune") == "Lyon 1er Arrondissement")
+                & (F.col("month") == 9)
+            )
+            .orderBy(
+                "day",
+                "hour",
+            )
+            .show(
+                30,
+                truncate=False,
+            )
+        )
+
+        print("\n=== IMPACT PLUIE - LYON 1ER - SEPTEMBRE 2023 ===")
+
+        (
+            weather_df
+            .filter(
+                (F.col("commune") == "Lyon 1er Arrondissement")
+                & (F.col("month") == 9)
+            )
+            .orderBy(
+                "is_raining",
+            )
+            .show(
+                truncate=False,
+            )
         )
 
     finally:
@@ -52,6 +111,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 """ Exemple d'exécution du job ReadGold dans le conteneur spark-master :
 
