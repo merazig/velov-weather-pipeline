@@ -76,11 +76,16 @@ services:
       - "7077:7077"
 
   spark-worker:
-    image: spark:4.1.2-python3
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.spark
     container_name: spark-worker
     depends_on:
       - spark-master
-
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
     command: >
       /opt/spark/bin/spark-class
       org.apache.spark.deploy.worker.Worker
@@ -103,6 +108,10 @@ services:
       - mongodb
     working_dir: /app
     environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
       MONGO_HOST: ${MONGO_HOST}
       MONGO_PORT: ${MONGO_PORT}
       MONGO_USERNAME: ${MONGO_USERNAME}

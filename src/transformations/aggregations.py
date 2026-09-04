@@ -1,7 +1,7 @@
 """Fonctions d'agrégation et de calcul d'activité Vélo'v."""
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import abs, col, lag, sum
+from pyspark.sql.functions import abs, col, countDistinct, lag, sum
 from pyspark.sql.window import Window
 
 
@@ -28,10 +28,21 @@ def filter_open_velov(df: DataFrame) -> DataFrame:
 
 
 def aggregate_station_activity(df: DataFrame) -> DataFrame:
-    """Agrège l'utilisation des stations par fenêtre de 15 minutes."""
+    """Agrège l'utilisation par station et tranche de 15 minutes."""
     return df.groupBy(
         "station_id",
         "time_15min",
     ).agg(
         sum("station_usage").alias("activity_15min"),
+    )
+
+
+def aggregate_by_commune(df: DataFrame) -> DataFrame:
+    """Agrège l'activité par commune et tranche de 15 minutes."""
+    return df.groupBy(
+        "commune",
+        "time_15min",
+    ).agg(
+        sum("station_usage").alias("activite"),
+        countDistinct("station_id").alias("nombre_stations_actives"),
     )
