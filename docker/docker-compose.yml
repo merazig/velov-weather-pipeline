@@ -87,6 +87,10 @@ services:
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       MONGO_DATABASE: ${MONGO_DATABASE}
 
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
+
     networks:
       - data_network
 
@@ -120,6 +124,10 @@ services:
       MONGO_USERNAME: ${MONGO_USERNAME}
       MONGO_PASSWORD: ${MONGO_PASSWORD}
       MONGO_DATABASE: ${MONGO_DATABASE}
+
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY}
 
     networks:
       - data_network

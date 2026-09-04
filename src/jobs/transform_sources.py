@@ -178,7 +178,70 @@ def add_time_features(df):
         )
     )
 
+def build_metrics(df):
+    """Calcule des indicateurs décisionnels par commune, date et heure."""
+    return (
+        df
+        .groupBy(
+            "commune",
+            "year",
+            "month",
+            "day",
+            "hour",
+        )
+        .agg(
+            F.avg("bikes_available").alias(
+                "avg_bikes_available"
+            ),
+            F.avg("stands_available").alias(
+                "avg_stands_available"
+            ),
+            F.avg("availability_rate").alias(
+                "avg_availability_rate"
+            ),
+            F.avg("temperature_2m_c").alias(
+                "avg_temperature_2m_c"
+            ),
+            F.avg("relative_humidity_2m_pct").alias(
+                "avg_humidity_pct"
+            ),
+            F.sum("rain_mm").alias(
+                "total_rain_mm"
+            ),
+            F.avg("wind_speed_10m_kmh").alias(
+                "avg_wind_speed_kmh"
+            ),
+            F.count("*").alias(
+                "observation_count"
+            ),
+        )
+    )
+# comparer la disponibilité moyenne selon qu’il pleut ou non
 
+def build_weather_impact_metrics(df):
+    """Compare la disponibilité des vélos selon les conditions météo."""
+    return (
+        df
+        .withColumn(
+            "is_raining",
+            F.col("rain_mm") > 0,
+        )
+        .groupBy(
+            "commune",
+            "is_raining",
+        )
+        .agg(
+            F.avg("availability_rate").alias(
+                "avg_availability_rate"
+            ),
+            F.avg("bikes_available").alias(
+                "avg_bikes_available"
+            ),
+            F.count("*").alias(
+                "observation_count"
+            ),
+        )
+    )
 def main():
     """Lit, transforme et joint les sources."""
     spark = get_spark_session(
@@ -264,6 +327,10 @@ def main():
                 final_df
             )
 
+        metrics_df = build_metrics(
+             final_ready
+            )
+
 
         print("\n\n=== VELOV READY ===")
         velov_ready.printSchema()
@@ -280,6 +347,16 @@ def main():
         final_ready.printSchema()
 
         final_ready.show(5,truncate=False,)
+
+
+        print("\n=== INDICATEURS DECISIONNELS ===")
+
+        metrics_df.printSchema()
+
+        metrics_df.show(
+            10,
+            truncate=False,
+        )
 
     finally:
         spark.stop()
@@ -354,14 +431,31 @@ MongoDB
 
              ↓
 
-JOIN :
-commune + datetime_15m
+        JOIN :
+        commune + datetime_15m
 
              ↓
 création des features (year, month, day, hour, day_of_week, is_weekend, availability_rate)
-
              ↓
-
          final_df
+             ↓
+        agrégations
+             ↓
+        metrics_df (indicateurs horaires par commune)
+            ↓
+        weather_impact_df
+        → impact pluie / météo sur la disponibilité
+           
 
+"""
+"""
+les resultats des indicateurs décisionnels fonctionnent:
+
+    Par exemple, pour Albigny-sur-Saône, le 23/02/2023 entre 10h et 11h,
+    Spark a regroupé 9 observations et calculé :
+    environ 4,44 vélos disponibles, 13,56 places disponibles,
+    un taux moyen de disponibilité de 24,69 %, 
+    une température moyenne de 8,3 °C, 
+    une humidité moyenne de 95,56 %, 
+    aucune pluie et un vent moyen d`environ 3,59 km/h.
 """
