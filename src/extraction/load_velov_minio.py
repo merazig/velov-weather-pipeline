@@ -1,1 +1,0 @@
-"""Charger des fichiers JSON dans minIO."""
